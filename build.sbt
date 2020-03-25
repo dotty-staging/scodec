@@ -144,7 +144,7 @@ lazy val testkit = crossProject(JVMPlatform)
     libraryDependencies ++= Seq(
       "org.scalatest" %%% "scalatest" % "3.1.0-SNAP13",
       "org.scalatestplus" %%% "scalacheck-1-14" % "3.1.0.0-RC3",
-      "org.scalacheck" %%% "scalacheck" % "1.14.1"
+      "org.scalacheck" %%% "scalacheck" % "1.14.1-SNAPSHOT"
     )
   )
   .dependsOn(core % "compile->compile")
