@@ -142,11 +142,9 @@ lazy val testkit = crossProject(JVMPlatform)
   .settings(
     name := "scodec-testkit",
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.1.1",
-      ("org.scalatestplus" %%% "scalacheck-1-14" % "3.1.1.1")
-        .intransitive()
-        .withDottyCompat(scalaVersion.value),
-      ("org.scalacheck" %%% "scalacheck" % "1.14.3").withDottyCompat(scalaVersion.value)
+      "org.scalatest" %%% "scalatest" % "3.1.0-SNAP13",
+      "org.scalatestplus" %%% "scalacheck-1-14" % "3.1.0.0-RC3",
+      "org.scalacheck" %%% "scalacheck" % "1.14.1"
     )
   )
   .dependsOn(core % "compile->compile")
