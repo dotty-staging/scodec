@@ -11,8 +11,10 @@ private[codecs] final class DoubleCodec(ordering: ByteOrdering) extends Codec[Do
 
   override def sizeBound = SizeBound.exact(64)
 
+  import scala.language.unsafeNulls
+
   override def encode(value: Double) = {
-    val buffer = ByteBuffer.allocate(8).order(byteOrder).putDouble(value).nn
+    val buffer = ByteBuffer.allocate(8).order(byteOrder).putDouble(value)
     buffer.flip()
     Attempt.successful(BitVector.view(buffer))
   }

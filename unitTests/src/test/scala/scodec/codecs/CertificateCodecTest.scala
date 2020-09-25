@@ -34,7 +34,7 @@ class CertificateCodecTest extends CodecSuite {
     val signer = new JcaContentSignerBuilder("SHA1withRSA").build(keyPair.getPrivate)
     val holder = bldr.build(signer).nn
     CertificateFactory
-      .getInstance("X.509")
+      .getInstance("X.509").nn
       .generateCertificate(new ByteArrayInputStream(holder.getEncoded))
       .asInstanceOf[X509Certificate]
   }

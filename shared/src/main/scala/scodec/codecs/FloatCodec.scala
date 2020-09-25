@@ -11,8 +11,10 @@ private[codecs] final class FloatCodec(ordering: ByteOrdering) extends Codec[Flo
 
   override def sizeBound = SizeBound.exact(32)
 
+  import scala.language.unsafeNulls
+
   override def encode(value: Float) = {
-    val buffer = ByteBuffer.allocate(4).order(ordering.toJava).putFloat(value).nn
+    val buffer = ByteBuffer.allocate(4).order(ordering.toJava).putFloat(value)
     buffer.flip()
     Attempt.successful(BitVector.view(buffer))
   }
