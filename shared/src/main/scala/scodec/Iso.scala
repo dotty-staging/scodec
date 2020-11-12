@@ -29,49 +29,51 @@
  */
 
 package scodec
-package codecs
 
-import scodec.bits.BitVector
+import scala.deriving.Mirror
 
-private[codecs] final class ConstrainedVariableSizeCodec[A](
-    sizeCodec: Codec[Long],
-    valueCodec: Codec[A],
-    minSize: Long,
-    maxSize: Long
-) extends Codec[A] {
-  require(minSize < maxSize)
-  require(minSize > -1)
+@annotation.implicitNotFound("""Could not prove ${A} is isomorphic to ${B}.""")
+trait Iso[A, B] { self =>
+  def to(a: A): B
+  def from(b: B): A
 
-  val minSizeBits = minSize * 8
-  val maxSizeBits = maxSize * 8
+  final def inverse: Iso[B, A] = new Iso[B, A] {
+    def to(b: B) = self.from(b)
+    def from(a: A) = self.to(a)
+  }
+}
 
-  private def checkBoundaries(sz: Long) = minSizeBits <= sz && sz <= maxSizeBits
-
-  private val decoder = sizeCodec.flatMap { sz =>
-    if (checkBoundaries(sz)) {
-      fixedSizeBits(sz, valueCodec).complete
-    } else {
-      fail[A](Err(s"Size out of bounds: $minSizeBits <= $sz <= $maxSizeBits is not true"))
+private trait IsoLowPriority {
+  def instance[A, B](t: A => B)(f: B => A): Iso[A, B] =
+    new Iso[A, B] {
+      def to(a: A) = t(a)
+      def from(b: B) = f(b)
     }
-  }
 
-  def sizeBound = sizeCodec.sizeBound.atLeast
+  given inverse[A, B](using iso: Iso[A, B]) as Iso[B, A] = iso.inverse
 
-  override def encode(a: A) = valueCodec.complete.encode(a).flatMap { enc =>
-    val sz = enc.size
+  inline given productWithUnits[A <: Tuple, B](using 
+    m: Mirror.ProductOf[B],
+    ev: m.MirroredElemTypes =:= DropUnits[A]
+  ) as Iso[A, B] = 
+    instance((a: A) => fromTuple(DropUnits.drop(a)))(b => DropUnits.insert(toTuple(b)))
 
-    if (checkBoundaries(sz))
-      sizeCodec.encode(sz).map(_ ++ enc).mapErr(e => failMsg(a, e.messageWithContext))
-    else
-      Attempt.failure(Err(s"Size out of bounds: $minSizeBits <= $sz <= $maxSizeBits is not true"))
+  protected def toTuple[A, B <: Tuple](a: A)(using m: Mirror.ProductOf[A], ev: m.MirroredElemTypes =:= B): B =
+    Tuple.fromProduct(a.asInstanceOf[Product]).asInstanceOf[B]
+  
+  protected def fromTuple[A, B <: Tuple](b: B)(using m: Mirror.ProductOf[A], ev: m.MirroredElemTypes =:= B): A =
+    m.fromProduct(b.asInstanceOf[Product]).asInstanceOf[A]
+}
 
-  }
+/** Companion for [[Iso]]. */
+object Iso extends IsoLowPriority {
 
-  private def failMsg(a: A, msg: String): Err =
-    Err.General(s"failed to encode size of [$a]: $msg", List("size"))
+  /** Identity iso. */
+  given id[A] as Iso[A, A] = instance[A, A](identity)(identity)
 
-  override def decode(buffer: BitVector) =
-    decoder.decode(buffer)
+  given product[A <: Tuple, B](using m: Mirror.ProductOf[B], ev: m.MirroredElemTypes =:= A) as Iso[A, B] =
+    instance[A, B](fromTuple)(toTuple)
 
-  override def toString = s"constrainedVariableSizeBits($sizeCodec, $valueCodec)"
+  given singleton[A, B](using m: Mirror.ProductOf[B], ev: m.MirroredElemTypes =:= A *: EmptyTuple) as Iso[A, B] =
+    instance[A, B](a => fromTuple(a *: EmptyTuple))(b => toTuple(b).head)
 }

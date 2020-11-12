@@ -1,6 +1,34 @@
-package scodec
+/*
+ * Copyright (c) 2013, Scodec
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
-import scala.deriving.Mirror
+package scodec
 
 /** Typeclass that describes type constructors that support the `exmap` operation. */
 trait Transform[F[_]] {
@@ -48,79 +76,4 @@ trait Transform[F[_]] {
       a => Attempt.successful(f(a)),
       b => Attempt.fromOption(g(b), Err(s"widening failed: $b"))
     )
-
-  /**
-    * Transforms supplied `F[A]` to an `F[B]` using implicitly available evidence that such a transformation
-    * is possible.
-    *
-    * The most common use case for this method is converting a `F[A]` for some `A <: Tuple` to/from an `F[CC]`
-    * for some case class `CC`, where the types in the case class are aligned with the types in `A`.
-    */
-  // def [A](fa: F[A]).as[B](using t: Transformer[A, B]): F[B] = t(fa)(using this)
-}
-
-/**
-  * Witness operation that supports transforming an `F[A]` to an `F[B]` for all `F` which have a `Transform`
-  * instance available.
-  */
-@annotation.implicitNotFound("""Could not prove that ${A} can be converted to/from ${B}.""")
-trait Transformer[A, B] {
-  def apply[F[_]: Transform](fa: F[A]): F[B]
-}
-
-trait TransformerLowPriority0 {
-  protected def toTuple[A, B <: Tuple](a: A)(using m: Mirror.ProductOf[A], ev: m.MirroredElemTypes =:= B): B =
-    Tuple.fromProduct(a.asInstanceOf[Product]).asInstanceOf[B]
-
-  protected def fromTuple[A, B <: Tuple](b: B)(using m: Mirror.ProductOf[A], ev: m.MirroredElemTypes =:= B): A =
-    m.fromProduct(b.asInstanceOf[Product]).asInstanceOf[A]
-}
-
-trait TransformerLowPriority extends TransformerLowPriority0 {
-  inline given fromProductWithUnits[A, B <: Tuple](using
-    m: Mirror.ProductOf[A],
-    ev: m.MirroredElemTypes =:= codecs.DropUnits.T[B]
-  ) as Transformer[A, B] =
-    new Transformer[A, B] {
-      def apply[F[_]: Transform](fa: F[A]): F[B] =
-        fa.xmap(a => codecs.DropUnits.insert(toTuple(a)), c => fromTuple(codecs.DropUnits.drop(c)))
-    }
-
-  inline given fromProductWithUnitsReverse[A, B <: Tuple](using
-    m: Mirror.ProductOf[A],
-    ev: m.MirroredElemTypes =:= codecs.DropUnits.T[B]
-  ) as Transformer[B, A] =
-    new Transformer[B, A] {
-      def apply[F[_]: Transform](fc: F[B]): F[A] =
-        fc.xmap(c => fromTuple(codecs.DropUnits.drop(c)), a => codecs.DropUnits.insert(toTuple(a)))
-    }
-}
-
-/** Companion for [[Transformer]]. */
-object Transformer extends TransformerLowPriority {
-
-  /** Identity transformer. */
-  given id[A] as Transformer[A, A] = new Transformer[A, A] {
-    def apply[F[_]: Transform](fa: F[A]): F[A] = fa
-  }
-
-  given fromProduct[A, B <: Tuple](using m: Mirror.ProductOf[A], ev: m.MirroredElemTypes =:= B) as Transformer[A, B] =
-    new Transformer[A, B] {
-      def apply[F[_]: Transform](fa: F[A]): F[B] = fa.xmap(toTuple, fromTuple)
-    }
-
-  given fromProductReverse[A, B <: Tuple](using m: Mirror.ProductOf[A], ev: m.MirroredElemTypes =:= B) as Transformer[B, A] =
-    new Transformer[B, A] {
-      def apply[F[_]: Transform](fb: F[B]): F[A] = fb.xmap(fromTuple, toTuple)
-    }
-
-  given fromProductSingleton[A, B](using m: Mirror.ProductOf[A], ev: m.MirroredElemTypes =:= B *: EmptyTuple) as Transformer[A, B] =
-    new Transformer[A, B] {
-      def apply[F[_]: Transform](fa: F[A]): F[B] = fa.xmap(a => toTuple(a).head, b => fromTuple(b *: Tuple()))
-    }
-
-  given fromProductSingletonReverse[A, B](using m: Mirror.ProductOf[A], ev: m.MirroredElemTypes =:= B *: EmptyTuple) as Transformer[B, A] =
-    new Transformer[B, A] {
-      def apply[F[_]: Transform](fb: F[B]): F[A] = fb.xmap(b => fromTuple(b *: Tuple()), a => toTuple(a).head)
-    }
 }

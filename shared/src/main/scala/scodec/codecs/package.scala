@@ -1,3 +1,33 @@
+/*
+ * Copyright (c) 2013, Scodec
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software without
+ *    specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 package scodec
 
 import scala.language.implicitConversions
@@ -139,7 +169,7 @@ package object codecs {
     * Encodes by returning the supplied byte vector if its length is `size` bytes, padding with zeroes if smaller than `size` bytes, returning error if greater;
     * decodes by taking `size * 8` bits from the supplied bit vector and converting to a byte vector.
     *
-    * @param size number of bits to encode/decode
+    * @param size number of bytes to encode/decode
     * @group bits
     */
   def bytes(size: Int): Codec[ByteVector] = new Codec[ByteVector] {
@@ -155,7 +185,7 @@ package object codecs {
     * Encodes by returning the supplied byte vector if its length is `size` bytes, otherwise returning error;
     * decodes by taking `size * 8` bits from the supplied bit vector and converting to a byte vector.
     *
-    * @param size number of bits to encode/decode
+    * @param size number of bytes to encode/decode
     * @group bits
     */
   def bytesStrict(size: Int): Codec[ByteVector] = new Codec[ByteVector] {
@@ -706,22 +736,6 @@ package object codecs {
     * @group bits
     */
   def constantLenient[A: Integral](bits: A*): Codec[Unit] = constantLenient(BitVector(bits: _*))
-
-  /**
-    * Provides implicit conversions from literal types to constant codecs.
-    *
-    * For example, with `literals._` imported, `constant(0x47) ~> uint8`
-    * can be written as `0x47 ~> uint8`.
-    *
-    * Supports literal bytes, ints, `BitVector`s, and `ByteVector`s.
-    *
-    * @group bits
-    */
-  object literals {
-    implicit def constantIntCodec(a: Int): Codec[Unit] = constant(a)
-    implicit def constantByteVectorCodec(a: ByteVector): Codec[Unit] = constant(a)
-    implicit def constantBitVectorCodec(a: BitVector): Codec[Unit] = constant(a)
-  }
 
   /**
     * Codec that limits the number of bits the specified codec works with.
@@ -1343,12 +1357,10 @@ package object codecs {
         {
           case (cnt, xs) =>
             if (xs.size == cnt) Attempt.successful(xs)
-            else
-              Attempt.failure(
-                Err(
-                  s"Insufficient number of elements: decoded ${xs.size} but should have decoded $cnt"
-                )
-              )
+            else {
+              val valueBits = valueCodec.sizeBound.exact.getOrElse(valueCodec.sizeBound.lowerBound)
+              Attempt.failure(Err.insufficientBits(cnt * valueBits, xs.size * valueBits))
+            }
         },
         xs => (xs.size, xs)
       )
@@ -1444,12 +1456,10 @@ package object codecs {
         {
           case (cnt, xs) =>
             if (xs.size == cnt) Attempt.successful(xs)
-            else
-              Attempt.failure(
-                Err(
-                  s"Insufficient number of elements: decoded ${xs.size} but should have decoded $cnt"
-                )
-              )
+            else {
+              val valueBits = valueCodec.sizeBound.exact.getOrElse(valueCodec.sizeBound.lowerBound)
+              Attempt.failure(Err.insufficientBits(cnt * valueBits, xs.size * valueBits))
+            }
         },
         xs => (xs.size, xs)
       )
