@@ -1,6 +1,7 @@
 package scodec
 package examples
 
+import scala.language.experimental.genericNumberLiterals
 import scodec.bits._
 import codecs._
 

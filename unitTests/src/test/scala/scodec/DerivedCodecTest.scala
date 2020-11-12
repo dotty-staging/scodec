@@ -2,6 +2,7 @@ package scodec
 
 import scodec.bits._
 import scodec.codecs._
+import scala.language.experimental.genericNumberLiterals
 
 class DerivedCodecTest extends CodecSuite {
 

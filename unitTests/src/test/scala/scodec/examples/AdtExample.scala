@@ -1,6 +1,7 @@
 package scodec
 package examples
 
+import scala.language.experimental.genericNumberLiterals
 import scodec.bits._
 import codecs._
 
@@ -11,7 +12,7 @@ class AdtExample extends CodecSuite {
   case class Wocket(size: Int, inverted: Boolean) extends Sprocket
 
   "ADT codec examples" should {
-    
+
     "support derivation" in {
       val codec = Codec[Sprocket]
       val encodedWocket = codec.encode(Wocket(1, true)).require
