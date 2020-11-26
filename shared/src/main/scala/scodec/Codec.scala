@@ -552,7 +552,7 @@ object Codec extends EncoderFunctions with DecoderFunctions {
     go(a).asInstanceOf[Codec[Tuple.InverseMap[A, Codec]]]
   }
 
-  inline given derivedTuple[A <: Tuple] as Codec[A] = new Codec[A] {
+  inline given [A <: Tuple] => Codec[A] as derivedTuple = new Codec[A] {
     def sizeBound = sizeBoundElems[A]
     def encode(t: A) = encodeTuple[A](t, 0)
     def decode(b: BitVector) = {
@@ -726,9 +726,9 @@ object Codec extends EncoderFunctions with DecoderFunctions {
   given Codec[ByteVector] = codecs.variableSizeBytesLong(codecs.int64, codecs.bytes)
   given Codec[java.util.UUID] = codecs.uuid
 
-  given [A](using ccount: Codec[Int], ca: Codec[A]) as Codec[List[A]] = codecs.listOfN(ccount, ca)
-  given [A](using ccount: Codec[Int], ca: Codec[A]) as Codec[Vector[A]] = codecs.vectorOfN(ccount, ca)
-  given [A](using cguard: Codec[Boolean], ca: Codec[A]) as Codec[Option[A]] = codecs.optional(cguard, ca)
+  given [A] => (ccount: Codec[Int]) => (ca: Codec[A]) => Codec[List[A]] = codecs.listOfN(ccount, ca)
+  given [A] => (ccount: Codec[Int], ca: Codec[A]) => Codec[Vector[A]] = codecs.vectorOfN(ccount, ca)
+  given [A] => (cguard: Codec[Boolean], ca: Codec[A]) => Codec[Option[A]] = codecs.optional(cguard, ca)
 
   given Transform[Codec] {
     extension [A, B](fa: Codec[A]) def exmap(f: A => Attempt[B], g: B => Attempt[A]): Codec[B] =
