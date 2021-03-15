@@ -32,6 +32,7 @@ package scodec
 
 import scala.deriving._
 import scala.compiletime._
+import scala.compiletime.ops.int.S
 
 import scodec.bits.{BitVector, ByteVector}
 import scala.collection.mutable
