@@ -30,6 +30,7 @@
 
 package scodec
 
+import scala.annotation.binaryAPIAccessor
 import scala.deriving.Mirror
 
 @annotation.implicitNotFound("""Could not prove ${A} is isomorphic to ${B}.""")
@@ -61,12 +62,12 @@ private trait IsoLowPriority:
       ev: m.MirroredElemTypes =:= DropUnits[A]
   ): Iso[A, B] = productWithUnits(using m.asInstanceOf)
 
-  protected def toTuple[A, B <: Tuple](a: A)(using
+  @binaryAPIAccessor protected def toTuple[A, B <: Tuple](a: A)(using
       m: Mirror.ProductOf[A] { type MirroredElemTypes = B }
   ): B =
     Tuple.fromProduct(a.asInstanceOf[Product]).asInstanceOf[B]
 
-  protected def fromTuple[A, B <: Tuple](b: B)(using
+  @binaryAPIAccessor protected def fromTuple[A, B <: Tuple](b: B)(using
       m: Mirror.ProductOf[A] { type MirroredElemTypes = B }
   ): A =
     m.fromProduct(b.asInstanceOf[Product]).asInstanceOf[A]
