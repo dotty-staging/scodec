@@ -32,6 +32,7 @@ package scodec
 
 import scala.deriving.*
 import scala.compiletime.*
+import scala.annotation.binaryAPIAccessor
 
 import scodec.bits.{BitVector, ByteVector}
 import scala.collection.mutable
@@ -603,7 +604,7 @@ object Codec extends EncoderFunctions, DecoderFunctions:
       case EmptyTuple =>
         Attempt.failure(Err.MatchingDiscriminatorNotFound(ordinal, Nil))
 
-  private def arrayProduct[A](arr: Array[A]): Product = new Product {
+  @binaryAPIAccessor private def arrayProduct[A](arr: Array[A]): Product = new Product {
     def canEqual(that: Any) = true
     def productArity = arr.size
     def productElement(n: Int) = arr(n)
