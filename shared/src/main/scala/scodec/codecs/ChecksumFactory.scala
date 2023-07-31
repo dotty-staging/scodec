@@ -93,8 +93,8 @@ object ChecksumFactory:
     def verify(signature: Array[Byte]): Boolean = MessageDigest.isEqual(sign, signature)
 
   private class XorSigner extends Signer:
-    var data: Array[Byte] = null
+    var data: Array[Byte]|Null = null
 
     def update(data: Array[Byte]): Unit = this.data = data
-    def sign: Array[Byte] = Array(data.reduce((b1, b2) => (b1 ^ b2).toByte))
+    def sign: Array[Byte] = Array(data.nn.reduce((b1, b2) => (b1 ^ b2).toByte))
     def verify(signature: Array[Byte]): Boolean = sign.sameElements(signature)
