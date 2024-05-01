@@ -32,6 +32,7 @@ package scodec
 
 import scala.deriving.*
 import scala.compiletime.*
+import scala.annotation.nowarn
 
 import scodec.bits.{BitVector, ByteVector}
 import scala.collection.mutable
@@ -336,7 +337,7 @@ object Codec extends EncoderFunctions, DecoderFunctions:
     * returned from applying `A` to `f`.
     */
   extension [A <: Tuple, B](codecA: Codec[A])
-    inline def flatAppend(f: A => Codec[B]): Codec[Tuple.Concat[A, B *: EmptyTuple]] =
+    @nowarn inline def flatAppend(f: A => Codec[B]): Codec[Tuple.Concat[A, B *: EmptyTuple]] =  // skip inlined class definition warning
       new Codec[Tuple.Concat[A, B *: EmptyTuple]]:
         def sizeBound = codecA.sizeBound.atLeast
         def encode(ab: Tuple.Concat[A, B *: EmptyTuple]) =
@@ -375,7 +376,7 @@ object Codec extends EncoderFunctions, DecoderFunctions:
     * @param codecA codec to concat
     */
   extension [A <: Tuple, B <: Tuple](codecA: Codec[A])
-    inline def ++(codecB: Codec[B]): Codec[Tuple.Concat[A, B]] =
+    @nowarn inline def ++(codecB: Codec[B]): Codec[Tuple.Concat[A, B]] = // skip inlined class definition warning
       new Codec[Tuple.Concat[A, B]]:
         def sizeBound = codecA.sizeBound + codecB.sizeBound
         def encode(ab: Tuple.Concat[A, B]) =
@@ -394,7 +395,7 @@ object Codec extends EncoderFunctions, DecoderFunctions:
     * returned from applying `A` to `f`.
     */
   extension [A <: Tuple, B <: Tuple](codecA: Codec[A])
-    inline def flatConcat(f: A => Codec[B]): Codec[Tuple.Concat[A, B]] =
+    @nowarn inline def flatConcat(f: A => Codec[B]): Codec[Tuple.Concat[A, B]] = // skip inlined class definition warning
       new Codec[Tuple.Concat[A, B]]:
         def sizeBound = codecA.sizeBound.atLeast
         def encode(ab: Tuple.Concat[A, B]) =
@@ -440,7 +441,7 @@ object Codec extends EncoderFunctions, DecoderFunctions:
       case EmptyTuple => codecs.provide(EmptyTuple)
     go(a).asInstanceOf[Codec[Tuple.InverseMap[A, Codec]]]
 
-  inline given derivedTuple[A <: Tuple]: Codec[A] = new Codec[A]:
+  @nowarn inline given derivedTuple[A <: Tuple]: Codec[A] = new Codec[A]: // skip inlined class definition warning
     def sizeBound = sizeBoundElems[A]
     def encode(t: A) = encodeTuple[A](t, 0)
     def decode(b: BitVector) =
@@ -475,7 +476,7 @@ object Codec extends EncoderFunctions, DecoderFunctions:
       case EmptyTuple =>
         Attempt.successful(DecodeResult(Tuple.fromArray(elems).asInstanceOf[T], b))
 
-  inline def derived[A](using m: Mirror.Of[A]): Codec[A] = new Codec[A]:
+  @nowarn inline def derived[A](using m: Mirror.Of[A]): Codec[A] = new Codec[A]: // skip inlined class definition warning
     def sizeBound = inline m match
       case p: Mirror.ProductOf[A] =>
         sizeBoundElems[p.MirroredElemTypes]
