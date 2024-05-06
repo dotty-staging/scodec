@@ -24,6 +24,8 @@ ThisBuild / developers ++= List(
   tlGitHubDev("pchiusano", "Paul Chiusano")
 )
 
+ThisBuild / tlFatalWarnings := false // disable fatal warnings in CI, as -Ykind-projector is now deprecated
+
 ThisBuild / mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[DirectMissingMethodProblem]("scodec.IsoLowPriority.toTuple"),
   ProblemFilters.exclude[DirectMissingMethodProblem]("scodec.IsoLowPriority.fromTuple"),
@@ -54,7 +56,9 @@ lazy val core = crossProject(JVMPlatform, JSPlatform)
     Compile / unmanagedResources ++= {
       val base = baseDirectory.value
       (base / "NOTICE") +: (base / "LICENSE") +: ((base / "licenses") * "LICENSE_*").get
-    }
+    },
+    scalacOptions -= "-Ykind-projector",
+    scalacOptions += "-Xkind-projector",
   )
 
 lazy val coreJS = core.js.settings(
