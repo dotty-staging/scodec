@@ -73,7 +73,7 @@ class RecoverCodecTest extends CodecSuite:
 
   property("recover - decode the wrong value as false and backtrack") {
     forAll { (i1: Int, i2: Int) =>
-      if (i1 != i2 && i1 >= 0 && i2 >= 0)
+      if i1 != i2 && i1 >= 0 && i2 >= 0 then
         val codec = recover(constant(BitVector.fromInt(i1)))
         val Attempt.Successful(DecodeResult(b, rest)) =
           codec.decode(BitVector.fromInt(i2)): @unchecked
@@ -119,7 +119,7 @@ class RecoverCodecTest extends CodecSuite:
 
   property("lookahead - decode the wrong value as false and backtrack") {
     forAll { (i1: Int, i2: Int) =>
-      if (i1 != i2 && i1 >= 0 && i2 >= 0)
+      if i1 != i2 && i1 >= 0 && i2 >= 0 then
         val codec = lookahead(constant(BitVector.fromInt(i1)))
         val Attempt.Successful(DecodeResult(b, rest)) =
           codec.decode(BitVector.fromInt(i2)): @unchecked

@@ -98,8 +98,8 @@ class CodecTest extends CodecSuite:
   test("exmap - supports validating input and output") {
     // accept 8 bit values no greater than 9
     val oneDigit: Codec[Int] = uint8.exmap[Int](
-      v => if (v > 9) Attempt.failure(Err("badv")) else Attempt.successful(v),
-      d => if (d > 9) Attempt.failure(Err("badd")) else Attempt.successful(d)
+      v => if v > 9 then Attempt.failure(Err("badv")) else Attempt.successful(v),
+      d => if d > 9 then Attempt.failure(Err("badd")) else Attempt.successful(d)
     )
 
     assertEquals(oneDigit.encode(3), Attempt.successful(BitVector(0x03)))
@@ -120,7 +120,7 @@ class CodecTest extends CodecSuite:
 
   def i2l(i: Int): Long = i.toLong
   def l2i(l: Long): Attempt[Int] =
-    if (l >= Int.MinValue && l <= Int.MaxValue) Attempt.successful(l.toInt)
+    if l >= Int.MinValue && l <= Int.MaxValue then Attempt.successful(l.toInt)
     else Attempt.failure(Err("out of range"))
 
   property("narrow supports converting to a smaller type") {
@@ -131,7 +131,7 @@ class CodecTest extends CodecSuite:
   property("widen supports converting to a larger type") {
     val narrowed = int32.widen(i2l, l2i)
     forAll { (n: Long) =>
-      if (n >= Int.MinValue && n <= Int.MaxValue)
+      if n >= Int.MinValue && n <= Int.MaxValue then
         assertEquals(narrowed.encode(n), int32.encode(n.toInt))
       else
         assertEquals(narrowed.encode(n), Attempt.failure(Err("out of range")))

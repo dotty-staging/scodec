@@ -48,7 +48,7 @@ class FailCodecTest extends CodecSuite:
 
   test("example usefulness") {
     val codec: Codec[(Int, String)] = int32.flatZip { x =>
-      if (x % 2 == 0) fixedSizeBytes(x / 2L, ascii) else fl(Err("must be even"))
+      if x % 2 == 0 then fixedSizeBytes(x / 2L, ascii) else fl(Err("must be even"))
     }
     assertEquals(codec.encode((4, "Hi")).isSuccessful, true)
     assertEquals(codec.encode((1, "Hi")), Attempt.failure(Err("must be even")))

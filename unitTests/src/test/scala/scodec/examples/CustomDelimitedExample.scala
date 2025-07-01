@@ -48,7 +48,7 @@ class CustomDelimitedExample extends CodecSuite:
         x <- acc
         y <- value.encode(a)
         _ <-
-          if (y.bytes.containsSlice(ByteVector(delimiter)))
+          if y.bytes.containsSlice(ByteVector(delimiter)) then
             Attempt.failure(Err(s"encoded form of $a contained reserved delimiter $delimiter"))
           else
             Attempt.successful(())
@@ -56,7 +56,7 @@ class CustomDelimitedExample extends CodecSuite:
     }
     def decode(b: BitVector) =
       def go(acc: List[A], remainder: BitVector): Attempt[DecodeResult[List[A]]] =
-        if (remainder.isEmpty) Attempt.successful(DecodeResult(acc.reverse, remainder))
+        if remainder.isEmpty then Attempt.successful(DecodeResult(acc.reverse, remainder))
         else
           val nextValue = remainder.bytes.takeWhile(_ != delimiter).bits
           value.decode(nextValue) match

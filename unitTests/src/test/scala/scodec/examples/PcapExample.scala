@@ -47,11 +47,11 @@ object PcapCodec:
   private val magicNumber = 0x000000a1b2c3d4L
   val byteOrdering = "magic_number" | Codec[ByteOrdering](
     (bo: ByteOrdering) =>
-      if (bo == ByteOrdering.BigEndian) uint32.encode(magicNumber) else uint32L.encode(magicNumber),
+      if bo == ByteOrdering.BigEndian then uint32.encode(magicNumber) else uint32L.encode(magicNumber),
     (buf: BitVector) =>
       uint32.decode(buf).map {
         _.map { mn =>
-          if (mn == magicNumber) ByteOrdering.BigEndian else ByteOrdering.LittleEndian
+          if mn == magicNumber then ByteOrdering.BigEndian else ByteOrdering.LittleEndian
         }
       }
   )
@@ -62,13 +62,13 @@ object PcapCodec:
     byteOrdering.flatPrepend(ordering => f(using ordering))
 
   def gint16(using ordering: ByteOrdering): Codec[Int] =
-    if (ordering == ByteOrdering.BigEndian) int16 else int16L
+    if ordering == ByteOrdering.BigEndian then int16 else int16L
   def guint16(using ordering: ByteOrdering): Codec[Int] =
-    if (ordering == ByteOrdering.BigEndian) uint16 else uint16L
+    if ordering == ByteOrdering.BigEndian then uint16 else uint16L
   def gint32(using ordering: ByteOrdering): Codec[Int] =
-    if (ordering == ByteOrdering.BigEndian) int32 else int32L
+    if ordering == ByteOrdering.BigEndian then int32 else int32L
   def guint32(using ordering: ByteOrdering): Codec[Long] =
-    if (ordering == ByteOrdering.BigEndian) uint32 else uint32L
+    if ordering == ByteOrdering.BigEndian then uint32 else uint32L
 
   case class PcapHeader(
       ordering: ByteOrdering,
