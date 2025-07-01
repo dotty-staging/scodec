@@ -229,7 +229,7 @@ object Decoder extends DecoderFunctions:
     override def toString = s"modify"
   }
 
-  given Transform[Decoder] with
+  given Transform[Decoder]:
     extension [A, B](fa: Decoder[A])
       def exmap(f: A => Attempt[B], g: B => Attempt[A]): Decoder[B] =
         fa.emap(f)
