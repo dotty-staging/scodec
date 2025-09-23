@@ -35,6 +35,7 @@ import java.security.MessageDigest
 import java.util.Arrays
 import java.util.zip.{Adler32, CRC32, Checksum}
 import scodec.bits.ByteVector
+import scala.compiletime.uninitialized
 
 /** Creates checksum implementations of [[SignerFactory]].
   */
@@ -93,7 +94,7 @@ object ChecksumFactory:
     def verify(signature: Array[Byte]): Boolean = MessageDigest.isEqual(sign, signature)
 
   private class XorSigner extends Signer:
-    var data: Array[Byte] = null
+    var data: Array[Byte] = uninitialized
 
     def update(data: Array[Byte]): Unit = this.data = data
     def sign: Array[Byte] = Array(data.reduce((b1, b2) => (b1 ^ b2).toByte))
